@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0b0f1a;
+  --surface: #121827;
+  --surface-2: #161f35;
+  --accent: #64ffda;
+  --accent-2: #5bc0eb;
+  --text: #e7eefb;
+  --muted: #9fb0d0;
+  --shadow: 0 18px 60px rgba(4, 10, 24, 0.55);
+  --ring: rgba(100, 255, 218, 0.2);
+}
+
+@theme inline {
+  --color-ink: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: radial-gradient(circle at top left, #18233a 0%, #0b0f1a 45%, #090d17 100%);
+  color: var(--text);
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+input, select, button, textarea {
+  font-family: inherit;
+}
+
+.selection-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+.glow {
+  box-shadow: 0 0 40px rgba(100, 255, 218, 0.18);
+}
+
+.badge {
+  background: linear-gradient(135deg, rgba(100, 255, 218, 0.2), rgba(91, 192, 235, 0.3));
+  color: var(--accent);
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(100, 255, 218, 0.08), rgba(91, 192, 235, 0.12));
+  padding: 1px;
+}
+
+.gradient-border > .gradient-inner {
+  border-radius: 23px;
+  background: rgba(18, 24, 39, 0.94);
+}
