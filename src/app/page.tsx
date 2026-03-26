@@ -40,6 +40,7 @@ export default function Home() {
   const [comparison, setComparison] = useState<CompareResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCategoryChange = (value: "mobile" | "laptop") => {
     setCategory(value);
@@ -47,6 +48,7 @@ export default function Home() {
     setComparison(null);
     setFilters(initialFilters);
     setQuery("");
+    setError(null);
   };
 
   const fetchOptions = useCallback(async () => {
@@ -79,14 +81,31 @@ export default function Home() {
   const handleCompare = async (option: SearchOption) => {
     setSelected(option);
     setLoading(true);
+    setError(null);
     const params = new URLSearchParams({
       category,
       product: option.id,
     });
-    const response = await fetch(`/api/compare-prices?${params.toString()}`);
-    const data = await response.json();
-    setComparison(data);
-    setLoading(false);
+
+    try {
+      const response = await fetch(`/api/compare-prices?${params.toString()}`);
+      if (!response.ok) {
+        setError("Unable to fetch comparison right now.");
+        setLoading(false);
+        return;
+      }
+      const data = await response.json();
+      if (data?.error) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+      setComparison(data);
+    } catch {
+      setError("Network error while comparing prices.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const bestSummary = useMemo(() => {
@@ -136,6 +155,48 @@ export default function Home() {
                   setFilters((prev) => ({ ...prev, [key]: value }))
                 }
               />
+              {query.length > 0 && options.length > 0 && !selected ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {options.slice(0, 6).map((option) => (
+                    <button
+                      key={option.id}
+                      className="rounded-2xl bg-surface px-4 py-3 text-left transition hover:bg-white/5"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        handleCompare(option);
+                      }}
+                    >
+                      <div className="text-sm font-semibold text-text">
+                        {option.name}
+                      </div>
+                      <div className="text-xs text-muted">
+                        {option.brand} • {option.ram} • {option.storage}
+                        {option.storageType ? ` • ${option.storageType}` : ""}
+                        {option.processor ? ` • ${option.processor}` : ""}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              {query.length > 0 && options.length > 0 ? (
+                <select
+                  className="selection-ring rounded-xl bg-surface px-3 py-2 text-sm text-text"
+                  onChange={(event) => {
+                    const selectedOption = options.find(
+                      (option) => option.id === event.target.value,
+                    );
+                    if (selectedOption) handleCompare(selectedOption);
+                  }}
+                  value={""}
+                >
+                  <option value="">Select a model to compare</option>
+                  {options.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
             </div>
           </div>
         </div>
@@ -148,9 +209,21 @@ export default function Home() {
           </div>
         ) : null}
 
+        {selected && !comparison ? (
+          <div className="mt-6 rounded-3xl bg-surface p-6 text-center text-muted shadow-xl">
+            Selected: <span className="text-text font-semibold">{selected.name}</span>
+          </div>
+        ) : null}
+
         {loading ? (
           <div className="mt-6 rounded-3xl bg-surface p-10 text-center text-muted shadow-xl">
             Fetching latest prices from all platforms...
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="mt-6 rounded-3xl bg-red-500/10 p-6 text-center text-red-200 shadow-xl">
+            {error}
           </div>
         ) : null}
 
@@ -181,6 +254,7 @@ export default function Home() {
                   {formatPrice(comparison.bestPrice)}
                 </p>
                 <p className="mt-1 text-sm text-emerald-200">
+                  {comparison.bestProviders.join(", ")} • 🔥 Best Price
                 </p>
               </div>
               <div className="rounded-3xl bg-surface p-6 shadow-xl">

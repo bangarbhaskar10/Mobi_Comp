@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 
 export type SearchOption = {
@@ -29,6 +29,7 @@ export const SearchBar = ({
   loading,
 }: SearchBarProps) => {
   const [open, setOpen] = useState(false);
+  const blurTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const filtered = useMemo(() => options.slice(0, 6), [options]);
 
@@ -41,9 +42,21 @@ export const SearchBar = ({
           onChange={(event) => {
             const value = event.target.value;
             onQueryChange(value);
-            setOpen(value.length > 1);
+            setOpen(true);
           }}
-          onFocus={() => setOpen(query.length > 1)}
+          onFocus={() => {
+            if (blurTimeout.current) clearTimeout(blurTimeout.current);
+            setOpen(true);
+          }}
+          onBlur={() => {
+            blurTimeout.current = setTimeout(() => setOpen(false), 120);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && filtered.length > 0) {
+              onSelect(filtered[0]);
+              setOpen(false);
+            }
+          }}
           placeholder="Search mobile or laptop model..."
           className="selection-ring w-full bg-transparent text-lg text-text placeholder:text-muted focus:outline-none"
         />
@@ -60,7 +73,8 @@ export const SearchBar = ({
                 "w-full text-left px-4 py-3 rounded-xl transition",
                 "hover:bg-white/5",
               )}
-              onClick={() => {
+              onMouseDown={(event) => {
+                event.preventDefault();
                 onSelect(option);
                 setOpen(false);
               }}
